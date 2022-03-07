@@ -30,13 +30,13 @@ locals {
 
 data "google_compute_network" "existing_network" {
   count   = var.create_network ? 0 : 1
-  project = local.project.project_id
+  project = module.project.project_id
   name    = var.network_name
 }
 
 data "google_compute_subnetwork" "existing_subnet" {
   count   = var.create_network ? 0 : 1
-  project = local.project.project_id
+  project = module.project.project_id
   name    = var.subnet_name
   region  = var.region
 }
@@ -44,9 +44,9 @@ data "google_compute_subnetwork" "existing_subnet" {
 module "elastic_search_network" {
   count   = var.create_network ? 1 : 0
   source  = "terraform-google-modules/network/google"
-  version = "~> 3.0"
+  version = "~> 5.0"
 
-  project_id   = local.project.project_id
+  project_id   = module.project.project_id
   network_name = var.network_name
   routing_mode = "GLOBAL"
   description  = "VPC Network created via Terraform"
@@ -71,18 +71,13 @@ module "elastic_search_network" {
       ip_cidr_range = var.service_cidr_block
     }]
   }
-
-  depends_on = [
-    module.elastic_search_project,
-    google_project_service.enabled_services
-  ]
 }
 
 // External access
 resource "google_compute_router" "router" {
   count = var.enable_internet_egress_traffic ? 1 : 0
 
-  project = local.project.project_id
+  project = module.project.project_id
   name    = "es-access-router"
   network = local.network.name
   region  = var.region
@@ -94,7 +89,7 @@ resource "google_compute_router" "router" {
 
 resource "google_compute_router_nat" "nat" {
   count                              = var.enable_internet_egress_traffic ? 1 : 0
-  project                            = local.project.project_id
+  project                            = module.project.project_id
   name                               = "es-proxy-ext-access-nat"
   router                             = google_compute_router.router[0].name
   region                             = var.region
@@ -106,14 +101,11 @@ resource "google_compute_router_nat" "nat" {
     filter = "ERRORS_ONLY"
   }
 
-  depends_on = [
-    google_project_service.enabled_services
-  ]
 }
 
 resource "google_compute_route" "external_access" {
   count            = var.enable_internet_egress_traffic ? 1 : 0
-  project          = local.project.project_id
+  project          = module.project.project_id
   dest_range       = "0.0.0.0/0"
   name             = "proxy-external-access"
   network          = local.network.name

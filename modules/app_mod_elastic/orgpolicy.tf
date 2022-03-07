@@ -13,43 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
- resource "google_project_organization_policy" "vpc_peering_policy" {
+
+resource "google_project_organization_policy" "vpc_peering_policy" {
   count      = var.set_vpc_peering_policy ? 1 : 0
   constraint = "compute.restrictVpcPeering"
-  project    = local.project.project_id
+  project    = module.project.project_id
 
   list_policy {
     allow {
       all = true
     }
   }
-  depends_on = [
-    module.elastic_search_project
-  ]
 }
 
 resource "google_project_organization_policy" "shielded_vm_policy" {
   count      = var.set_shielded_vm_policy ? 1 : 0
   constraint = "compute.requireShieldedVm"
-  project    = local.project.project_id
+  project    = module.project.project_id
 
   boolean_policy {
     enforced = false
   }
-  depends_on = [
-    module.elastic_search_project
-  ]
 }
 
 resource "time_sleep" "wait_120_seconds" {
-  
+
   count = var.set_vpc_peering_policy || var.set_shielded_vm_policy ? 1 : 0
 
   depends_on = [
-      google_project_organization_policy.vpc_peering_policy,
-      google_project_organization_policy.shielded_vm_policy
-      ]
+    google_project_organization_policy.vpc_peering_policy,
+    google_project_organization_policy.shielded_vm_policy
+  ]
 
   create_duration = "120s"
 }

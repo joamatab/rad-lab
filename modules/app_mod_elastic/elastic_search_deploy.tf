@@ -15,7 +15,7 @@
  */
 
 locals {
-  k8s_credentials_cmd          = "gcloud container clusters get-credentials ${module.gke_cluster.name} --region ${var.region} --project ${local.project.project_id}"
+  k8s_credentials_cmd          = "gcloud container clusters get-credentials ${module.gke_cluster.name} --region ${var.region} --project ${module.project.project_id}"
   elastic_search_identity_name = "es-demo-identity"
   k8s_namespace                = "elastic-search-demo"
 }
@@ -23,7 +23,7 @@ locals {
 module "deploy_eck_crds" {
   source = "terraform-google-modules/gcloud/google//modules/kubectl-wrapper"
 
-  project_id              = local.project.project_id
+  project_id              = module.project.project_id
   cluster_name            = module.gke_cluster.name
   cluster_location        = var.region
   kubectl_create_command  = "kubectl create -f https://download.elastic.co/downloads/eck/1.8.0/crds.yaml"
@@ -39,7 +39,7 @@ module "deploy_eck_crds" {
 module "deploy_eck_operator" {
   source = "terraform-google-modules/gcloud/google//modules/kubectl-wrapper"
 
-  project_id              = local.project.project_id
+  project_id              = module.project.project_id
   cluster_name            = module.gke_cluster.name
   cluster_location        = var.region
   kubectl_create_command  = "kubectl apply -f https://download.elastic.co/downloads/eck/1.8.0/operator.yaml"
@@ -75,7 +75,7 @@ module "deploy_elastic_search" {
   count  = var.deploy_elastic_search ? 1 : 0
   source = "terraform-google-modules/gcloud/google//modules/kubectl-wrapper"
 
-  project_id              = local.project.project_id
+  project_id              = module.project.project_id
   cluster_name            = module.gke_cluster.name
   cluster_location        = var.region
   kubectl_create_command  = "kubectl apply -f ${path.module}/elk"

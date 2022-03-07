@@ -91,7 +91,11 @@ variable "kibana_instance_count" {
   default     = "1"
 }
 
-
+variable "labels" {
+  description = "Labels that should be assigned to resources supporting labels."
+  type        = map(string)
+  default     = {}
+}
 variable "master_ipv4_cidr_block" {
   description = "IPv4 CIDR block to assign to the Master cluster."
   type        = string

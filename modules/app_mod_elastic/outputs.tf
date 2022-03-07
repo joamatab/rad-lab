@@ -24,7 +24,15 @@ output "cluster_credentials_cmd" {
 }
 
 output "project_id" {
-  value = local.project.project_id
+  value = module.project.project_id
+}
+
+output "project_number" {
+  value = module.project.project_number
+}
+
+output "random_id" {
+  value = module.project.random_id
 }
 
 
