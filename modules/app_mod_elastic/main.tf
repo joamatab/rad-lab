@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+locals {
+  random_id = var.random_id == null ? random_id.random_id.0.hex : var.random_id
+}
+
+resource "random_id" "random_id" {
+  count       = var.random_id == null ? 1 : 0
+  byte_length = 2
+}
+
+
 module "project" {
   source = "../../helpers/tf_modules/project"
 
@@ -21,8 +31,8 @@ module "project" {
   create_project     = var.create_project
   parent             = length(var.folder_id) != 0 ? "folders/${var.folder_id}" : "organizations/${var.organization_id}"
   labels             = var.labels
-  random_id          = var.random_id
-  project_id         = var.project_name
+  random_id          = local.random_id
+  project_id         = var.project_id
   project_name       = var.project_name
 
   project_services = [

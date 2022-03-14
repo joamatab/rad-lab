@@ -32,7 +32,7 @@ output "project_number" {
 }
 
 output "random_id" {
-  value = module.project.random_id
+  value = local.random_id
 }
 
 

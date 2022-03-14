@@ -32,7 +32,3 @@ output "project_number" {
     google_project_service.default,
   ]
 }
-
-output "random_id" {
-  value = local.random_id
-}
