@@ -27,8 +27,8 @@ module "gke_cluster" {
   project_id                 = module.project.project_id
   name                       = var.gke_cluster_name
   region                     = var.region
-  network                    = local.network.name
-  subnetwork                 = local.subnet.name
+  network                    = module.elastic_search_network.name
+  subnetwork                 = module.elastic_search_network.subnets["${var.region}/${var.subnet_name}"].name
   remove_default_node_pool   = true
   initial_node_count         = 1
   ip_range_pods              = var.pod_ip_range_name

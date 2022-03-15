@@ -14,63 +14,23 @@
  * limitations under the License.
  */
 
-locals {
-  network = (
-    var.create_network
-    ? try(module.elastic_search_network.0.network.network, null)
-    : try(data.google_compute_network.existing_network.0, null)
-  )
-
-  subnet = (
-    var.create_network
-    ? try(module.elastic_search_network.0.subnets["${var.region}/${var.subnet_name}"], null)
-    : try(data.google_compute_subnetwork.existing_subnet.0, null)
-  )
-}
-
-data "google_compute_network" "existing_network" {
-  count   = var.create_network ? 0 : 1
-  project = module.project.project_id
-  name    = var.network_name
-}
-
-data "google_compute_subnetwork" "existing_subnet" {
-  count   = var.create_network ? 0 : 1
-  project = module.project.project_id
-  name    = var.subnet_name
-  region  = var.region
-}
-
 module "elastic_search_network" {
-  count   = var.create_network ? 1 : 0
-  source  = "terraform-google-modules/network/google"
-  version = "~> 5.0"
+  source = "../../helpers/tf_modules/net-vpc"
 
-  project_id   = module.project.project_id
-  network_name = var.network_name
-  routing_mode = "GLOBAL"
-  description  = "VPC Network created via Terraform"
+  project_id  = module.project.project_id
+  name        = var.network_name
+  vpc_create  = var.create_network
+  description = "VPC network created via Terraform as part of RAD Lab."
 
-  subnets = [
-    {
-      subnet_name           = var.subnet_name
-      subnet_ip             = var.network_cidr_block
-      subnet_region         = var.region
-      description           = "Subnetwork inside ${var.network_name} VPC network, created via Terraform"
-      subnet_private_access = true
-
+  subnets = [{
+    name          = var.subnet_name
+    ip_cidr_range = var.network_cidr_block
+    region        = var.region
+    secondary_ip_range = {
+      "${var.pod_ip_range_name}"     = var.pod_cidr_block
+      "${var.service_ip_range_name}" = var.service_cidr_block
     }
-  ]
-
-  secondary_ranges = {
-    "${var.subnet_name}" = [{ # Do not remove quotes, Terraform doesn't like variable references as map-keys without them
-      range_name    = var.pod_ip_range_name
-      ip_cidr_range = var.pod_cidr_block
-      }, {
-      range_name    = var.service_ip_range_name
-      ip_cidr_range = var.service_cidr_block
-    }]
-  }
+  }]
 }
 
 // External access
@@ -79,7 +39,7 @@ resource "google_compute_router" "router" {
 
   project = module.project.project_id
   name    = "es-access-router"
-  network = local.network.name
+  network = module.elastic_search_network.name
   region  = var.region
 
   bgp {
@@ -108,7 +68,7 @@ resource "google_compute_route" "external_access" {
   project          = module.project.project_id
   dest_range       = "0.0.0.0/0"
   name             = "proxy-external-access"
-  network          = local.network.name
+  network          = module.elastic_search_network.name
   next_hop_gateway = "default-internet-gateway"
 }
 
