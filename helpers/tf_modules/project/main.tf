@@ -15,11 +15,12 @@
  */
 
 locals {
-  parent_type  = var.parent == null ? null : split("/", var.parent)[0]
-  parent_id    = var.parent == null ? null : split("/", var.parent)[1]
-  project_id   = var.project_id != null ? var.project_id : format("%s-%s", var.project_name, var.random_id)
-  project_name = var.project_name != null ? var.project_name : local.project_id
-  labels       = merge({ solution = "radlab", source = "terraform" }, var.labels)
+  parent_type      = var.parent == null ? null : split("/", var.parent)[0]
+  parent_id        = var.parent == null ? null : split("/", var.parent)[1]
+  project_id       = var.project_id != null ? var.project_id : format("%s-%s", var.project_name, var.random_id)
+  project_name     = var.project_name != null ? var.project_name : local.project_id
+  labels           = merge({ solution = "radlab", source = "terraform" }, var.labels)
+  project_services = var.create_project ? var.project_services : []
 
   project = (
     var.create_project ?
@@ -53,7 +54,7 @@ resource "google_project" "default" {
 }
 
 resource "google_project_service" "default" {
-  for_each                   = var.project_services
+  for_each                   = local.project_services
   project                    = local.project.project_id
   service                    = each.value
   disable_dependent_services = true
